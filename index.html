@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northwind Commerce — Sales Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Spline+Sans+Mono:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap');
+
+:root{
+  --bg:#0f1115;--panel:#171a21;--panel-2:#1d212a;--line:#272b35;
+  --ink:#f4f1ea;--muted:#9aa0ad;--accent:#e8c468;--accent-2:#6fae8e;
+  --accent-3:#c97b5c;--accent-4:#7d8bc4;--good:#6fae8e;--bad:#cf6b5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;padding:32px;
+  background-image:radial-gradient(circle at 15% 0%,rgba(232,196,104,0.06),transparent 40%),radial-gradient(circle at 85% 100%,rgba(111,174,142,0.05),transparent 40%);min-height:100vh}
+.wrap{max-width:1280px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:8px;flex-wrap:wrap;gap:16px}
+.brand h1{font-family:'Fraunces',serif;font-weight:900;font-size:38px;letter-spacing:-0.02em;line-height:1}
+.brand .sub{color:var(--muted);font-size:13px;margin-top:8px;font-family:'Spline Sans Mono',monospace;letter-spacing:0.04em}
+.brand .dot{color:var(--accent)}
+.byline{text-align:right;font-size:12px;color:var(--muted);font-family:'Spline Sans Mono',monospace;line-height:1.7}
+.byline b{color:var(--ink);font-weight:600}
+.databadge{display:inline-block;margin-top:6px;font-size:10.5px;padding:3px 9px;border-radius:6px;font-family:'Spline Sans Mono',monospace;letter-spacing:0.04em}
+.databadge.live{background:rgba(111,174,142,0.15);color:var(--good)}
+.databadge.demo{background:rgba(232,196,104,0.15);color:var(--accent)}
+.dl-btn{display:inline-block;margin-top:10px;font-family:'Spline Sans Mono',monospace;font-size:11.5px;
+  color:var(--ink);background:var(--panel);border:1px solid var(--line);padding:7px 13px;border-radius:8px;
+  text-decoration:none;transition:all .18s ease;letter-spacing:0.02em}
+.dl-btn:hover{border-color:var(--accent-2);color:var(--accent-2);background:var(--panel-2)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:28px 0 24px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent)}
+.kpi:nth-child(2)::after{background:var(--accent-2)}
+.kpi:nth-child(3)::after{background:var(--accent-3)}
+.kpi:nth-child(4)::after{background:var(--accent-4)}
+.kpi .k-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-family:'Spline Sans Mono',monospace}
+.kpi .k-val{font-family:'Fraunces',serif;font-weight:700;font-size:32px;margin:10px 0 6px;letter-spacing:-0.01em}
+.kpi .k-note{font-size:12px;font-family:'Spline Sans Mono',monospace;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card h3{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin-bottom:2px}
+.card .csub{color:var(--muted);font-size:12px;font-family:'Spline Sans Mono',monospace;margin-bottom:18px}
+.chart-box{position:relative;height:280px}
+.chart-box.sm{height:220px}
+
+.insight{background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px}
+.insight h3{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.insight h3 .badge{font-family:'Spline Sans Mono',monospace;font-size:10px;background:var(--accent);color:#1a1a1a;padding:3px 8px;border-radius:5px;letter-spacing:0.05em;font-weight:600}
+.insight ul{list-style:none;display:flex;flex-direction:column;gap:14px}
+.insight li{display:flex;gap:14px;align-items:flex-start;font-size:14px;line-height:1.55;color:#d8d4cb}
+.insight li .num{font-family:'Spline Sans Mono',monospace;color:var(--accent);font-weight:600;font-size:13px;flex-shrink:0;margin-top:1px}
+.insight li b{color:var(--ink);font-weight:600}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;color:var(--muted);font-family:'Spline Sans Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;padding:8px 12px;border-bottom:1px solid var(--line);font-weight:500}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td{padding:11px 12px;border-bottom:1px solid rgba(39,43,53,0.5)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--panel-2)}
+.tbl .prod{font-weight:500}
+.bar-cell{position:relative}
+.bar-fill{position:absolute;left:12px;top:50%;transform:translateY(-50%);height:6px;background:var(--accent-2);border-radius:3px;opacity:0.3}
+
+footer{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;font-family:'Spline Sans Mono',monospace;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.tag{font-size:10px;font-family:'Spline Sans Mono',monospace;color:var(--accent-3);border:1px solid var(--line);padding:1px 6px;border-radius:4px;margin-left:8px;vertical-align:middle}
+
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}body{padding:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Northwind Commerce<span class="dot">.</span></h1>
+      <div class="sub">SALES ANALYTICS DASHBOARD &nbsp;/&nbsp; UK E-COMMERCE 2010–2011</div>
+    </div>
+    <div class="byline">
+      Built by <b>Kehinde Osunniran</b><br>
+      Data Analyst &nbsp;·&nbsp; SQL / Python / Viz<br>
+      <span id="dataStatus" class="databadge demo">● loading…</span><br>
+      <a id="dlBtn" class="dl-btn" href="cleaned_retail.csv" download style="display:none">↓ Download cleaned data (CSV)</a>
+    </div>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Revenue Trend</h3>
+      <div class="csub">monthly net revenue · full dataset window</div>
+      <div class="chart-box"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Revenue by Market</h3>
+      <div class="csub">top countries by net revenue</div>
+      <div class="chart-box"><canvas id="catChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="insight">
+      <h3><span class="badge">INSIGHT</span> What the data is telling us</h3>
+      <ul id="insights"></ul>
+    </div>
+    <div class="card">
+      <h3>Customer Segments</h3>
+      <div class="csub">revenue by spend tier (RFM-lite)</div>
+      <div class="chart-box sm"><canvas id="segChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Top Products</h3>
+      <div class="csub">ranked by net revenue</div>
+      <table class="tbl" id="prodTable">
+        <thead><tr><th>Product</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Sales Funnel <span class="tag">illustrative</span></h3>
+      <div class="csub">conversion by stage</div>
+      <div class="chart-box sm"><canvas id="funnelChart"></canvas></div>
+    </div>
+  </div>
+
+  <footer>
+    <span id="footMeta">loading dataset…</span>
+    <span>Methodology: net revenue = quantity × unit price, cancellations & invalid rows removed</span>
+  </footer>
+
+</div>
+
+<script>
+// =====================================================================
+//  DEMO FALLBACK DATA  — used only if dashboard_data.json is missing.
+//  Run pipeline.py to generate the real file and these get replaced.
+// =====================================================================
+const DEMO = {
+  kpi:{net_revenue:8911000,orders:18250,aov:488,customers:4338},
+  trend:[
+    {year:2010,month:12,revenue:712000},{year:2011,month:1,revenue:560000},
+    {year:2011,month:2,revenue:498000},{year:2011,month:3,revenue:683000},
+    {year:2011,month:4,revenue:493000},{year:2011,month:5,revenue:723000},
+    {year:2011,month:6,revenue:691000},{year:2011,month:7,revenue:681000},
+    {year:2011,month:8,revenue:682000},{year:2011,month:9,revenue:1019000},
+    {year:2011,month:10,revenue:1071000},{year:2011,month:11,revenue:1462000},
+    {year:2011,month:12,revenue:636000}
+  ],
+  top_products:[
+    {product:'WHITE HANGING HEART T-LIGHT HOLDER',units:36782,revenue:99668},
+    {product:'REGENCY CAKESTAND 3 TIER',units:12347,revenue:97894},
+    {product:'JUMBO BAG RED RETROSPOT',units:46180,revenue:85221},
+    {product:'PARTY BUNTING',units:14920,revenue:68844},
+    {product:'ASSORTED COLOUR BIRD ORNAMENT',units:35314,revenue:56580},
+    {product:'POSTAGE',units:3036,revenue:54271}
+  ],
+  countries:[
+    {country:'United Kingdom',revenue:7308000},{country:'Netherlands',revenue:285000},
+    {country:'EIRE',revenue:265000},{country:'Germany',revenue:228000},
+    {country:'France',revenue:209000},{country:'Australia',revenue:138000},
+    {country:'Spain',revenue:62000},{country:'Switzerland',revenue:57000}
+  ],
+  segments:[
+    {segment:'VIP',revenue:5790000},{segment:'Loyal',revenue:1782000},
+    {segment:'Occasional',revenue:980000},{segment:'New',revenue:359000}
+  ],
+  generated_from:'DEMO sample (run pipeline.py for real UCI figures)'
+};
+
+// illustrative funnel (not derivable from the transaction-only dataset)
+const FUNNEL = [
+  {stage:'Site Visits',val:248000},{stage:'Product Views',val:142000},
+  {stage:'Add to Cart',val:51200},{stage:'Checkout',val:23800},{stage:'Purchase',val:14200}
+];
+
+const PALETTE = ['#e8c468','#6fae8e','#c97b5c','#7d8bc4','#b5685e','#8a9a5b','#c4a35a','#6f7686'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let D = DEMO, isLive = false;
+
+const cur = '£';
+const fmt = n => cur+(n/1000000>=1 ? (n/1000000).toFixed(2)+'M' : Math.round(n/1000)+'K');
+
+// ---------- RENDERERS (all read from D) ----------
+function renderStatus(){
+  const el=document.getElementById('dataStatus');
+  if(isLive){el.className='databadge live';el.textContent='● live data · '+D.generated_from;}
+  else{el.className='databadge demo';el.textContent='● demo data · run pipeline.py for real figures';}
+  document.getElementById('footMeta').textContent =
+    (isLive?'Real UCI Online Retail data · ':'Demo sample · ') +
+    D.trend.length+' months · '+Number(D.kpi.orders).toLocaleString()+' orders · '+
+    Number(D.kpi.customers).toLocaleString()+' customers';
+}
+
+function renderKPIs(){
+  const k=D.kpi;
+  const cards=[
+    {label:'Net Revenue',val:fmt(k.net_revenue),note:'full period'},
+    {label:'Total Orders',val:Number(k.orders).toLocaleString(),note:'unique invoices'},
+    {label:'Avg Order Value',val:cur+Math.round(k.aov).toLocaleString(),note:'per invoice'},
+    {label:'Customers',val:Number(k.customers).toLocaleString(),note:'unique buyers'}
+  ];
+  document.getElementById('kpis').innerHTML=cards.map(c=>`
+    <div class="kpi"><div class="k-label">${c.label}</div>
+    <div class="k-val">${c.val}</div><div class="k-note">${c.note}</div></div>`).join('');
+}
+
+function renderInsights(){
+  const total=D.kpi.net_revenue;
+  // peak month
+  const peak=[...D.trend].sort((a,b)=>b.revenue-a.revenue)[0];
+  const peakName=MONTHS[peak.month-1]+' '+peak.year;
+  // top country share
+  const topC=D.countries[0];
+  const cShare=(topC.revenue/D.countries.reduce((s,x)=>s+x.revenue,0)*100).toFixed(0);
+  // VIP share
+  const segTotal=D.segments.reduce((s,x)=>s+x.revenue,0);
+  const vip=D.segments.find(s=>/vip/i.test(s.segment))||D.segments[0];
+  const vipShare=(vip.revenue/segTotal*100).toFixed(0);
+  // top product
+  const tp=D.top_products[0];
+
+  const items=[
+    `<b>${peakName} is the single biggest revenue month.</b> Demand is seasonal and concentrated, so shifting campaign spend ahead of the peak captures intent earlier instead of chasing it.`,
+    `<b>${topC.country} drives roughly ${cShare}% of revenue.</b> The business is geographically concentrated. International markets are small but a clear growth lever if logistics scale.`,
+    `<b>The top customer tier contributes about ${vipShare}% of revenue.</b> This is the highest-leverage group. A focused retention program here protects more revenue than chasing new buyers.`,
+    `<b>"${tp.product.toLowerCase()}" is the top product by revenue.</b> A small set of SKUs carries the catalog, so stock-outs on these items would hit revenue hardest. Prioritize their inventory.`,
+    `<b>Cart-to-checkout is the weakest funnel stage</b> (illustrative). Even a 5% recovery there adds meaningful orders. Checkout friction is the clearest fix.`
+  ];
+  document.getElementById('insights').innerHTML=items.map((t,i)=>
+    `<li><span class="num">0${i+1}</span><span>${t}</span></li>`).join('');
+}
+
+function renderTable(){
+  const max=Math.max(...D.top_products.map(p=>p.revenue));
+  document.querySelector('#prodTable tbody').innerHTML=D.top_products.slice(0,6).map(p=>{
+    const w=p.revenue/max*100;
+    const name=p.product.length>34?p.product.slice(0,33)+'…':p.product;
+    return `<tr>
+      <td class="prod bar-cell"><div class="bar-fill" style="width:${w*0.9}%"></div><span style="position:relative" title="${p.product}">${name}</span></td>
+      <td class="r">${Number(p.units).toLocaleString()}</td>
+      <td class="r">${fmt(p.revenue)}</td></tr>`;
+  }).join('');
+}
+
+// ---------- CHARTS ----------
+Chart.defaults.color='#9aa0ad';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12;
+let trendChart,catChart,segChart,funnelChart;
+const gridLine=()=>({color:'rgba(39,43,53,0.6)',drawTicks:false});
+
+function buildCharts(){
+  // trend (single real series)
+  const tLabels=D.trend.map(t=>MONTHS[t.month-1]+' '+String(t.year).slice(2));
+  trendChart=new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels:tLabels,datasets:[{label:'Net Revenue',data:D.trend.map(t=>t.revenue),
+      borderColor:'#e8c468',backgroundColor:'rgba(232,196,104,0.10)',fill:true,tension:0.4,
+      borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#e8c468'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+      scales:{y:{grid:gridLine(),ticks:{callback:v=>fmt(v)}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:8}}}}
+  });
+
+  // revenue by market (doughnut)
+  catChart=new Chart(document.getElementById('catChart'),{
+    type:'doughnut',
+    data:{labels:D.countries.map(c=>c.country),datasets:[{data:D.countries.map(c=>c.revenue),
+      backgroundColor:D.countries.map((_,i)=>PALETTE[i%PALETTE.length]),borderColor:'#171a21',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,padding:10,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}
+  });
+
+  // segments (horizontal bar)
+  segChart=new Chart(document.getElementById('segChart'),{
+    type:'bar',
+    data:{labels:D.segments.map(s=>s.segment),datasets:[{data:D.segments.map(s=>s.revenue),
+      backgroundColor:['#e8c468','#6fae8e','#7d8bc4','#c97b5c'],borderRadius:6,barThickness:26}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+      scales:{x:{grid:gridLine(),ticks:{callback:v=>fmt(v)}},y:{grid:{display:false}}}}
+  });
+
+  // funnel (illustrative)
+  funnelChart=new Chart(document.getElementById('funnelChart'),{
+    type:'bar',
+    data:{labels:FUNNEL.map(f=>f.stage),datasets:[{data:FUNNEL.map(f=>f.val),
+      backgroundColor:['#7d8bc4','#6fae8e','#e8c468','#c97b5c','#b5685e'],borderRadius:6,barThickness:24}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toLocaleString()+' ('+(c.raw/FUNNEL[0].val*100).toFixed(1)+'%)'}}},
+      scales:{x:{grid:gridLine(),ticks:{callback:v=>(v/1000)+'K'}},y:{grid:{display:false}}}}
+  });
+}
+
+function renderAll(){renderStatus();renderKPIs();renderInsights();renderTable();buildCharts();}
+
+// ---------- DATA LOADER ----------
+async function init(){
+  try{
+    const res=await fetch('dashboard_data.json',{cache:'no-store'});
+    if(!res.ok) throw new Error('no file');
+    const json=await res.json();
+    if(json && json.kpi && json.trend){ D=json; isLive=true; }
+  }catch(e){
+    isLive=false; // keep DEMO
+  }
+  // reveal the download button only if the cleaned CSV is actually present
+  try{
+    const csv=await fetch('cleaned_retail.csv',{method:'HEAD'});
+    if(csv.ok) document.getElementById('dlBtn').style.display='inline-block';
+  }catch(e){/* file not there yet — keep button hidden */}
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 An end to end data analyst project: pull real e-commerce transaction data, clean it, analyze it with SQL and pandas, and present the findings in an interactive web dashboard.
 
-**Live demo:** `(https://github.com/Kehinde291c/sales-analytics-dashboard)`
+**Live demo:** `(https://kehinde291c.github.io/sales-analytics-dashboard/)`
 **Built by:** Kehinde Osunniran — Data Analyst
 
 ---

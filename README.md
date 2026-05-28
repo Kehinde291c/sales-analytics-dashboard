@@ -2,14 +2,14 @@
 
 An end to end data analyst project: pull real e-commerce transaction data, clean it, analyze it with SQL and pandas, and present the findings in an interactive web dashboard.
 
-**Live demo:** `https://YOUR-USERNAME.github.io/sales-analytics-dashboard/`
+**Live demo:** `(https://github.com/Kehinde291c/sales-analytics-dashboard)`
 **Built by:** Kehinde Osunniran — Data Analyst
 
 ---
 
 ## Business problem
 
-A UK based online gift retailer wants to know where its revenue actually comes from and where it is leaking. Leadership needs answers to four questions before planning next year's budget:
+A UK-based online gift retailer wants to know where its revenue actually comes from and where it is leaking. Leadership needs answers to four questions before planning next year's budget:
 
 1. When does revenue peak, and how concentrated is it?
 2. Which products and categories drive the most value?
